@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Disaster-Response Drone Control</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Segoe UI", sans-serif;
+    }
+    body {
+      background: #309bc9;
+      background: linear-gradient(135deg, #121f24, #476a77, #2d5161);
+      color: white;
+      overflow-x: hidden;
+    }
+    header {
+      position: fixed;
+      top: 0;
+      width: 100%;
+      padding: 20px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(18, 31, 35, 0.6);
+      backdrop-filter: blur(1px);
+      z-index: 1000;
+    }
+    header h1 {
+      font-size: clamp(1.2em, 3vw, 1.5em);
+      color: #e7eaea;
+      letter-spacing: 1px;
+      margin-right: 680px;
+    }
+    nav {
+      display: flex;
+      align-items: center;
+    }
+    nav a {
+      text-decoration: none;
+      color: #dee0e0;
+      margin: 0 15px;
+      font-weight: bold;
+      position: relative;
+      font-size: clamp(0.9em, 2vw, 1em);
+    }
+    nav a::after {
+      content: '';
+      position: absolute;
+      width: 0;
+      height: 2px;
+      left: 0;
+      bottom: -5px;
+      background: #00d4ff;
+      transition: 0.3s;
+    }
+    nav a:hover::after {
+      width: 100%;
+    }
+    .hamburger {
+      display: none;
+      font-size: 1.8em;
+      background: none;
+      border: none;
+      color: #00d4ff;
+      cursor: pointer;
+      z-index: 1001;
+    }
+    .nav-links {
+      display: flex;
+      gap: 15px;
+    }
+    .slider-container {
+      position: relative;
+      width: 100%;
+      max-width: 700px;
+      margin: 30px auto;
+      overflow: hidden;
+      border-radius: 12px;
+      box-shadow: 0px 5px 15px rgba(0,0,0,0.4);
+    }
+    .slides {
+      display: flex;
+      transition: transform 0.5s ease-in-out;
+    }
+    .slides img {
+      width: 100%;
+      height: auto;
+      object-fit: cover;
+      border-radius: 12px;
+    }
+    .prev, .next {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(0,0,0,0.5);
+      color: white;
+      border: none;
+      padding: 12px;
+      cursor: pointer;
+      border-radius: 50%;
+      font-size: clamp(14px, 2vw, 18px);
+    }
+    .prev { left: 10px; }
+    .next { right: 10px; }
+    .prev:hover, .next:hover {
+      background: rgba(0,0,0,0.8);
+    }
+    .hero {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 20px;
+      background: url('Placeholder14.jpg') center/cover no-repeat;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero h2 {
+      font-size: clamp(1.8em, 5vw, 3em);
+      animation: fadeInDown 1.5s ease;
+    }
+    .hero p {
+      font-size: clamp(1em, 2.5vw, 1.2em);
+      margin-top: 15px;
+      max-width: 90%;
+      animation: fadeInUp 2s ease;
+    }
+    .hero button {
+      margin-top: 25px;
+      padding: 12px 25px;
+      font-size: clamp(0.9em, 2vw, 1em);
+      border: none;
+      border-radius: 25px;
+      background: #00d4ff;
+      color: black;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    .hero button:hover {
+      background: #ff9800;
+      transform: scale(1.1);
+    }
+    .container {
+      max-width: 90%;
+      margin: 40px auto;
+      padding: 20px;
+    }
+    .spec-box {
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      margin-bottom: 20px;
+      padding: 20px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .spec-box:hover {
+      background: rgba(255, 255, 255, 0.15);
+      transform: translateY(-5px);
+    }
+    .spec-title {
+      font-size: clamp(1.2em, 3vw, 1.5em);
+      color: #00d4ff;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .spec-title span {
+      font-size: clamp(1em, 2.5vw, 1.2em);
+      transition: transform 0.3s ease;
+    }
+    .spec-content {
+      margin-top: 15px;
+      display: none;
+      line-height: 1.8em;
+      font-size: clamp(0.9em, 2vw, 1em);
+    }
+    .spec-content img {
+      width: 100%;
+      height: auto;
+      max-height: 300px;
+      object-fit: contain;
+      border-radius: 12px;
+      margin-top: 10px;
+    }
+    .show .spec-content {
+      display: block;
+    }
+    .show .spec-title span {
+      transform: rotate(90deg);
+    }
+    .drone {
+      position: absolute;
+      top: 20%;
+      left: -200px;
+      width: clamp(80px, 10vw, 120px);
+      animation: fly 10s linear infinite;
+    }
+    @keyframes fly {
+      0% { left: -200px; top: 20%; transform: rotate(10deg); }
+      50% { left: 110%; top: 40%; transform: rotate(-10deg); }
+      100% { left: -200px; top: 20%; transform: rotate(10deg); }
+    }
+    section {
+      padding: clamp(40px, 8vw, 80px) 20px;
+      text-align: center;
+      opacity: 0;
+      transform: translateY(40px);
+      transition: all 1s ease;
+    }
+    section.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    section h2 {
+      font-size: clamp(1.8em, 4vw, 2.5em);
+      margin-bottom: 20px;
+      color: #00d4ff;
+    }
+    .features {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: clamp(15px, 3vw, 25px);
+    }
+    .feature {
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 25px;
+      width: clamp(200px, 30vw, 250px);
+      transition: transform 0.5s ease, box-shadow 0.5s ease;
+    }
+    .feature:hover {
+      transform: translateY(-10px) scale(1.05);
+      box-shadow: 0px 10px 25px rgba(0,0,0,0.4);
+    }
+    footer {
+      text-align: center;
+      padding: 20px;
+      background: rgba(0,0,0,0.8);
+      margin-top: 50px;
+      font-size: clamp(0.8em, 2vw, 1em);
+    }
+    @keyframes fadeInDown {
+      from { opacity: 0; transform: translateY(-50px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(50px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    /* Responsive Adjustments */
+    @media (max-width: 1024px) {
+      header {
+        padding: 15px 20px;
+      }
+      .hero {
+        padding: 15px;
+        height: 80vh;
+      }
+      .slider-container {
+        width: 95%;
+      }
+      .features {
+        gap: 15px;
+      }
+      .feature {
+        width: clamp(180px, 45vw, 220px);
+      }
+    }
+    /* 📱 Mobile Responsive Adjustments */
+@media (max-width: 600px) {
+  header {
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 10px 15px;
+  }
+
+  header h1 {
+    font-size: 1.2em;
+    margin-right: 0;
+  }
+
+  .hamburger {
+    display: block;
+    font-size: 1.6em;
+  }
+
+  .nav-links {
+    display: none;
+    flex-direction: column;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background: rgba(48, 82, 104, 0.95);
+    text-align: center;
+    padding: 15px;
+  }
+  .nav-links.active {
+    display: flex;
+  }
+
+  .hero {
+    height: 60vh;
+    padding: 15px;
+  }
+  .hero h2 {
+    font-size: 1.5em;
+  }
+  .hero p {
+    font-size: 0.9em;
+  }
+  .hero button {
+    font-size: 0.85em;
+    padding: 10px 20px;
+  }
+
+  .slider-container {
+    width: 100%;
+    margin: 15px auto;
+  }
+
+  .spec-box {
+    padding: 12px;
+  }
+  .spec-title {
+    font-size: 1em;
+  }
+  .spec-content {
+    font-size: 0.85em;
+  }
+
+  .comparison {
+    flex-direction: column;
+    align-items: center;
+  }
+  .card {
+    width: 90%;
+  }
+
+  .features {
+    flex-direction: column;
+    align-items: center;
+  }
+  .feature {
+    width: 90%;
+    max-width: 280px;
+  }
+
+  footer {
+    font-size: 0.8em;
+    padding: 15px;
+  }
+}
+
+@media (max-width: 400px) {
+  .hero {
+    height: 50vh;
+  }
+  .hero h2 {
+    font-size: 1.2em;
+  }
+  .hero p {
+    font-size: 0.8em;
+  }
+  .feature {
+    width: 95%;
+  }
+  .card {
+    min-width: unset;
+    max-width: 95%;
+  }
+}
+     body {
+      font-family: "Segoe UI", sans-serif;
+      background: #0d1b2a;
+      color: #fff;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h2 {
+      text-align: center;
+      color: #00d4ff;
+      margin-bottom: 20px;
+    }
+
+    .comparison {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      justify-content: center;
+    }
+
+    .card {
+      flex: 1;
+      min-width: 280px;
+      max-width: 400px;
+      background: rgba(255, 255, 255, 0.08);
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 6px 15px rgba(0,0,0,0.4);
+      transition: transform 0.3s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-8px);
+    }
+
+    .card h3 {
+      text-align: center;
+      color: #ffcc00;
+    }
+
+    .card ul {
+      margin-top: 10px;
+      padding-left: 20px;
+    }
+
+    table {
+      width: 100%;
+      margin-top: 30px;
+      border-collapse: collapse;
+      background: rgba(255,255,255,0.05);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    th, td {
+      border: 1px solid rgba(255,255,255,0.2);
+      padding: 12px;
+      text-align: center;
+    }
+
+    th {
+      background: #00d4ff;
+      color: #000;
+    }
+
+    tr:hover {
+      background: rgba(255,255,255,0.1);
+    }
+  </style>
+</head>
+<body>
+  <header>
+
+    <h1>Smart UFO Dron system</h1>
+    <nav>
+      <button class="hamburger">☰</button>
+      <div class="nav-links">
+        <a href="#about">About</a>
+        <a href="#features">Features</a>
+        <a href="#contact">Contact</a>
+      </div>
+    </nav>
+  </header>
+  <section class="hero">
+    <h2>Smart Disaster-Response Drone</h2>
+    <p>AI-powered drones for emergency supply delivery in remote and disaster-hit regions. Faster, safer, and smarter relief response.</p>
+  </section>
+  <h2 style="text-align:center; color:#00d4ff;">System Architecture</h2>
+  <div class="slider-container">
+    <div class="slides" style="width: 10;">
+      <img src="Placeholder14.jpg" alt="System Architecture">
+      <img src="placeholder15.jpg" alt="Drone Flow">
+      <img src="placeholder16.jpg" alt="Mobile App">
+      <img src="placeholder17.jpg" alt="Mobile App">
+    </div>
+    <button class="prev">&#10094;</button>
+    <button class="next">&#10095;</button>
+  </div>
+  <script>
+    let index = 0;
+    const slides = document.querySelector('.slides');
+    const total = document.querySelectorAll('.slides img').length;
+    const prev = document.querySelector('.prev');
+    const next = document.querySelector('.next');
+    function moveSlide(direction) {
+      index = (index + direction + total) % total;
+      slides.style.transform = `translateX(-${index * 100}%)`;
+    }
+    next.addEventListener('click', () => moveSlide(1));
+    prev.addEventListener('click', () => moveSlide(-1));
+    setInterval(() => moveSlide(1), 3000);
+
+    // Hamburger menu toggle
+    const hamburger = document.querySelector('.hamburger');
+    const navLinks = document.querySelector('.nav-links');
+    hamburger.addEventListener('click', () => {
+      navLinks.classList.toggle('active');
+    });
+  </script>
+  <h2>Normal Drone vs UFO Drone</h2>
+
+  <!-- Two cards -->
+  <div class="comparison">
+    <div class="card">
+      <h3>Normal Drone</h3>
+      <ul>
+        <li>Visible arms with propellers</li>
+        <li>Stable, GPS + gyroscope control</li>
+        <li>Medium to high payload capacity</li>
+        <li>Loud (rotors exposed)</li>
+        <li>Used in delivery, rescue, filming</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>UFO Drone</h3>
+      <ul>
+        <li>Enclosed saucer-like design</li>
+        <li>Hidden propellers, ducted fans</li>
+        <li>Higher payload capacity</li>
+        <li>Quieter and more aerodynamic</li>
+        <li>Used in shows, experiments, stealth</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Comparison Table -->
+  <table>
+    <tr>
+      <th>Feature</th>
+      <th>Normal Drone</th>
+      <th>UFO Drone</th>
+    </tr>
+    <tr>
+      <td>Shape</td>
+      <td>Arms + rotors</td>
+      <td>Circular saucer</td>
+    </tr>
+    <tr>
+      <td>Noise</td>
+      <td>Loud</td>
+      <td>Quieter</td>
+    </tr>
+    <tr>
+      <td>Payload</td>
+      <td>Medium–high</td>
+      <td>Heigh–medium</td>
+    </tr>
+    <tr>
+      <td>Usage</td>
+      <td>Practical (delivery, rescue, filming)</td>
+      <td>Experimental, stealth, show drones use Raining time also</td>
+    </tr>
+    <tr>
+      <td>Availability</td>
+      <td>Widely available</td>
+      <td>Rare / Concept</td>
+    </tr>
+  </table>
+  <h2 style="text-align:center; color:#00d4ff;">Drone Specifications</h2>
+  <div class="container">
+    <div class="spec-box" onclick="toggleSpec(this)">
+      <div class="spec-title">🔧 Drone Hardware <span>▶</span></div>
+      <div class="spec-content">
+        <img src="placeholder8.png" alt="Drone Hardware">
+        • Payload Capacity: 5–7 kg <br>
+        • Frame: Carbon fiber / Aluminum alloy <br>
+        • Motors: Brushless DC (5000–7000 RPM) <br>
+        • Propellers: 4/6 blades, carbon fiber <br>
+        • Battery: Li-Po 6S, 16000 mAh (40–60 min) <br>
+        • Max Speed: 50–70 km/h <br>
+        • Range: 8–12 km <br>
+        • GPS: GNSS + RTK <br>
+        • Sensors: Lidar, Gyroscope, Accelerometer <br>
+        • Camera: 4K HD
+      </div>
+    </div>
+
+    <div class="spec-box" onclick="toggleSpec(this)">
+      <div class="spec-title">🧠 Software & AI <span>▶</span></div>
+      <div class="spec-content">
+        <img src="placeholder11.jpg" alt="Drone Hardware">
+        • AI-powered autonomous navigation <br>
+        • Real-time GPS tracking <br>
+        • Communication: 4G/5G, Wi-Fi, Satellite <br>
+        • Mobile/Web app control <br>
+        • Encrypted communication
+      </div>
+    </div>
+    <div class="spec-box" onclick="toggleSpec(this)">
+      <div class="spec-title">📱 Control App <span>▶</span></div>
+      <div class="spec-content">
+        <img src="placeholder10.jpg" alt="Drone Hardware">
+        • Android, iOS & Web dashboard <br>
+        • Live drone tracking on map <br>
+        • Mission planning (waypoints) <br>
+        • Real-time video feed <br>
+        • Supply & payload monitoring <br>
+        • Emergency recall button
+      </div>
+    </div>
+    <div class="spec-box" onclick="toggleSpec(this)">
+      <div class="spec-title">⚡ Performance <span>▶</span></div>
+      <div class="spec-content">
+        • 20% faster response vs ground delivery <br>
+        • Modes: Manual / Semi-autonomous / Autonomous <br>
+        • Auto return-to-home on low battery/signal loss <br>
+        • Enhanced safety in disaster zones
+        • Weather resistance: Light rain, wind <br>
+        • Obstacle avoidance using Lidar & AI <br>
+        • Payload drop mechanism for precise delivery <br>
+      </div>
+    </div>
+    <div class="spec-box" onclick="toggleSpec(this)">
+      <div class="spec-title">🛸 Aircraft Configuration <span>▶</span></div>
+      <div class="spec-content">
+        • Quadcopter design with 4 motors + circular propeller guards.<br>
+        • Payload capacity: 5 kg, with redundancy (can hover briefly on 3 motors).<br>
+        • Wheelbase: 600–800 mm for stability.<br>
+        • Frame materials: carbon fiber + 3D-printed parts (portable for disaster response).<br>
+        • Dimensions<br>
+        • Unfolded: 800 × 800 × 600 mm.<br>
+        • Folded: 400 × 400 × 300 mm (fits in backpack/vehicle).<br>
+        • Spherical top: 200 mm diameter (streamlines airflow).<br>
+        • Weight: 5–6 kg empty (with battery); Max Takeoff Weight (MTOW): 11 kg.<br>
+        • Payload<br>
+        • Capacity: 5 kg spherical top-loading bay.<br>
+        • Design: 3D-printed, servo-release mechanism, weight sensors.<br>
+        • Performance:<br>
+        • Max speed: 15 m/s<br>
+        • Flight time: 15–20 mins (with 5 kg load)<br>
+        • Range: 5–8 km (one-way)<br>
+        • Max altitude: 2000 m<br>
+        • Withstands winds up to 10 m/s<br>
+        • Power System<br>
+        • Battery: 6S LiPo (22.2V, 6000 mAh, 45C), hot-swappable.<br>
+        • Motors: 4 × 4114 400KV brushless + 40A ESCs + 15" carbon props.<br>
+        • Thrust: ~16 kg (4 kg per motor) for 11 kg all-up weight<br>.
+        • Control & AI: Pixhawk 6X clone (ArduPilot), Raspberry Pi 5 (4GB), GPS/RTK, LiDAR (TFmini-S), 720p binocular vision camera.<br>
+        • AI: TensorFlow Lite + YOLOv8, ±10 cm obstacle avoidance precision.<br>
+        • Safety Features<br>
+        • Parachute: Deployable above 30 m (supports 11 kg).<br>
+        • Failsafe: Auto-RTL on low battery/signal loss, geo-fencing.<br>
+        • Protection: Redundant IMU, circular prop guards.<br>
+        • Communication: 433 MHz (8 km range), 720p FPV with OSD, FrSky X8R + Taranis QX7, WiFi module for app control.<br>
+        • Mobile App<br>
+        • Built with Flutter, based on QGroundControl.<br>
+        • Features: route planning, live tracking, payload release, multi-user coordination.<br>
+        • Performance: ~20% faster delivery in simulations.<br>
+        • Structure<br>
+        • Top layer: spherical 5 kg payload bay (top-opening).<br>
+        • Mid layer: spherical housing for sensors/camera.<br>
+        • Lower mid-layer: 4 props + circular guards.<br>
+        • Bottom: 3D-printed landing stand.<br>
+        • Future Enhancements<br>
+        • Low-cost AI damage assessment mapping with YOLOv8 (50% faster disaster assessment).<br>
+        • Modular payload pods with IoT tracking (GPS + temp/humidity sensors).<br>
+        • Cost-effective add-ons (~$70 total).<br>
+        • Provides analytics + medicine integrity monitoring.<br>
+        • Tailored for Odisha’s disaster response needs.<br>
+      </div>
+    </div>
+  </div>
+  <script>
+    function toggleSpec(element) {
+      element.classList.toggle("show");
+    }
+  </script>
+  <section id="about">
+    <h2>About the Project</h2>
+    <p>The Smart Disaster-Response Drone Control System is an innovative solution designed to save lives during emergencies by delivering critical supplies to disaster-hit and remote regions. Equipped with advanced AI-powered navigation, real-time tracking, and obstacle avoidance, these drones can safely transport medical kits, food, and communication devices where ground access is impossible. With a payload capacity of over 5kg and seamless integration with a mobile control application, the system enables rapid coordination between rescue teams and drones. By reducing response times by up to 20%, this technology ensures faster relief delivery, minimizes human risk, and enhances the overall efficiency of disaster management operations.</p>
+  </section>
+  <section id="features">
+    <h2>Key Features</h2>
+    <div class="features">
+      <div class="feature">📦 Payload Capacity: 5kg+</div>
+      <div class="feature">🤖 AI Navigation</div>
+      <div class="feature">🛰 Real-time Tracking</div>
+      <div class="feature">📱 Mobile App Integration</div>
+      <div class="feature">⚡ 20% Faster Response</div>
+    </div>
+  </section>
+  <section id="contact">
+    <h2>Contact Us</h2>
+    <p>Email: infoufodronesystem@gmail.com</p>
+  </section>
+  <footer>
+    <p>© 2025 Smart Disaster-Response Drone Control. All rights reserved.</p>
+  </footer>
+  <script>
+    const sections = document.querySelectorAll("section");
+    const revealOnScroll = () => {
+      sections.forEach(sec => {
+        const secTop = sec.getBoundingClientRect().top;
+        if (secTop < window.innerHeight - 100) {
+          sec.classList.add("show");
+        }
+      });
+    };
+    window.addEventListener("scroll", revealOnScroll);
+    window.addEventListener("load", revealOnScroll);
+  </script>
+</body>
+</html>
